@@ -26,6 +26,7 @@ protocol DraggableCardDelegate: class {
     func card(cardSwipeThresholdRatioMargin card: DraggableCardView) -> CGFloat?
     func card(cardAllowedDirections card: DraggableCardView) -> [SwipeResultDirection]
     func card(cardShouldDrag card: DraggableCardView) -> Bool
+    func card(cardDragShouldBeLockedInVertical card: DraggableCardView) -> Bool
     func card(cardSwipeSpeed card: DraggableCardView) -> DragSpeed
     func card(cardPanBegan card: DraggableCardView)
     func card(cardPanFinished card: DraggableCardView)
@@ -46,7 +47,7 @@ private let cardResetAnimationDuration: TimeInterval = 0.2
 internal var cardSwipeActionAnimationDuration: TimeInterval = DragSpeed.default.rawValue
 
 public class DraggableCardView: UIView, UIGestureRecognizerDelegate {
-
+    
     //Drag animation constants
     public var rotationMax = defaultRotationMax
     public var rotationAngle = defaultRotationAngle
@@ -67,7 +68,7 @@ public class DraggableCardView: UIView, UIGestureRecognizerDelegate {
     private var dragBegin = false
     private var dragDistance = CGPoint.zero
     private var swipePercentageMargin: CGFloat = 0.0
-
+    
     
     //MARK: Lifecycle
     init() {
@@ -108,7 +109,7 @@ public class DraggableCardView: UIView, UIGestureRecognizerDelegate {
         tapGestureRecognizer.delegate = self
         tapGestureRecognizer.cancelsTouchesInView = false
         addGestureRecognizer(tapGestureRecognizer)
-
+        
         if let delegate = delegate {
             cardSwipeActionAnimationDuration = delegate.card(cardSwipeSpeed: self).rawValue
         }
@@ -128,11 +129,11 @@ public class DraggableCardView: UIView, UIGestureRecognizerDelegate {
         } else {
             self.addSubview(view)
         }
-
+        
         self.contentView = view
         configureContentView()
     }
-
+    
     private func configureOverlayView() {
         if let overlay = self.overlayView {
             overlay.translatesAutoresizingMaskIntoConstraints = false
@@ -249,11 +250,17 @@ public class DraggableCardView: UIView, UIGestureRecognizerDelegate {
             let rotationAngle = animationDirectionY * self.rotationAngle * rotationStrength
             let scaleStrength = 1 - ((1 - scaleMin) * fabs(rotationStrength))
             let scale = max(scaleStrength, scaleMin)
-    
+            
             var transform = CATransform3DIdentity
             transform = CATransform3DScale(transform, scale, scale, 1)
             transform = CATransform3DRotate(transform, rotationAngle, 0, 0, 1)
-            transform = CATransform3DTranslate(transform, dragDistance.x, dragDistance.y, 0)
+            if delegate?.card(cardDragShouldBeLockedInVertical: self) {
+                transform = CATransform3DTranslate(transform, dragDistance.x, 0, 0)
+            } else {
+                transform = CATransform3DTranslate(transform, dragDistance.x, dragDistance.y, 0)
+            }
+            
+            //   transform = CATransform3DTranslate(transform, dragDistance.x, dragDistance.y, 0)
             layer.transform = transform
             
             let percentage = dragPercentage
@@ -302,7 +309,7 @@ public class DraggableCardView: UIView, UIGestureRecognizerDelegate {
                 return (distance, direction)
             }
             return closest
-        }.direction
+            }.direction
     }
     
     private var dragPercentage: CGFloat {
@@ -324,9 +331,9 @@ public class DraggableCardView: UIView, UIGestureRecognizerDelegate {
             // check 4 borders for intersection with line between touchpoint and center of card
             // return smallest percentage of distance to edge point or 0
             return rect.perimeterLines
-                        .compactMap { CGPoint.intersectionBetweenLines(targetLine, line2: $0) }
-                        .map { centerDistance / $0.distanceTo(.zero) }
-                        .min() ?? 0
+                .compactMap { CGPoint.intersectionBetweenLines(targetLine, line2: $0) }
+                .map { centerDistance / $0.distanceTo(.zero) }
+                .min() ?? 0
         }
     }
     
@@ -449,3 +456,4 @@ public class DraggableCardView: UIView, UIGestureRecognizerDelegate {
         }
     }
 }
+
