@@ -23,6 +23,13 @@ private let defaultAlphaValueOpaque: CGFloat = 1.0
 private let defaultAlphaValueTransparent: CGFloat = 0.0
 private let defaultAlphaValueSemiTransparent: CGFloat = 0.7
 
+public enum StartCardsPosition: Int {
+    case top
+    case right
+    case left
+    case bottom
+}
+
 public protocol KolodaViewDataSource: class {
     
     func kolodaNumberOfCards(_ koloda: KolodaView) -> Int
@@ -51,6 +58,7 @@ public protocol KolodaViewDelegate: class {
     func koloda(_ koloda: KolodaView, didSelectCardAt index: Int)
     func kolodaShouldApplyAppearAnimation(_ koloda: KolodaView) -> Bool
     func kolodaShouldMoveBackgroundCard(_ koloda: KolodaView) -> Bool
+    func kolodaShoudLockVerticalDirection(_ koloda: KolodaView) -> Bool
     func kolodaShouldTransparentizeNextCard(_ koloda: KolodaView) -> Bool
     func koloda(_ koloda: KolodaView, draggedCardWithPercentage finishPercentage: CGFloat, in direction: SwipeResultDirection)
     func kolodaDidResetCard(_ koloda: KolodaView)
@@ -94,6 +102,8 @@ open class KolodaView: UIView, DraggableCardDelegate {
     public var rotationMax: CGFloat?
     public var rotationAngle: CGFloat?
     public var scaleMin: CGFloat?
+    
+    public var startPositionCards: StartCardsPosition = .bottom
     
     public var appearanceAnimationDuration = defaultAppearanceAnimationDuration
     
@@ -189,16 +199,58 @@ open class KolodaView: UIView, DraggableCardDelegate {
     
     // MARK: Frames
     open func frameForCard(at index: Int) -> CGRect {
-        let bottomOffset: CGFloat = 0
-        let topOffset = defaultBackgroundCardsTopMargin * CGFloat(countOfVisibleCards - 1)
-        let scalePercent = defaultBackgroundCardsScalePercent
-        let width = self.frame.width * pow(scalePercent, CGFloat(index))
-        let xOffset = (self.frame.width - width) / 2
-        let height = (self.frame.height - bottomOffset - topOffset) * pow(scalePercent, CGFloat(index))
-        let multiplier: CGFloat = index > 0 ? 1.0 : 0.0
-        let prevCardFrame = index > 0 ? frameForCard(at: max(index - 1, 0)) : .zero
-        let yOffset = (prevCardFrame.height - height + prevCardFrame.origin.y + defaultBackgroundCardsTopMargin) * multiplier
-        let frame = CGRect(x: xOffset, y: yOffset, width: width, height: height)
+        var frame: CGRect = CGRect.zero
+        if startPositionCards == .bottom {
+            let bottomOffset: CGFloat = 0
+            let topOffset = defaultBackgroundCardsTopMargin * CGFloat(countOfVisibleCards - 1)
+            let scalePercent = defaultBackgroundCardsScalePercent
+            let width = self.frame.width * pow(scalePercent, CGFloat(index))
+            let xOffset = (self.frame.width - width) / 2
+            let height = (self.frame.height - bottomOffset - topOffset) * pow(scalePercent, CGFloat(index))
+            let multiplier: CGFloat = index > 0 ? 1.0 : 0.0
+            let prevCardFrame = index > 0 ? frameForCard(at: max(index - 1, 0)) : .zero
+            let yOffset = (prevCardFrame.height - height + prevCardFrame.origin.y + defaultBackgroundCardsTopMargin) * multiplier
+            frame = CGRect(x: xOffset, y: yOffset, width: width, height: height)
+        } else if startPositionCards == .top {
+            let defaultBackgroundCardsTopMargin = -self.frame.height / 15
+            let defaultBackgroundCardsScalePercent: CGFloat = 0.95
+            let bottomOffset: CGFloat = 0
+            let topOffset = defaultBackgroundCardsTopMargin * CGFloat(countOfVisibleCards - 1)
+            let scalePercent = defaultBackgroundCardsScalePercent
+            let width = self.frame.width * pow(scalePercent, CGFloat(index))
+            let xOffset = (self.frame.width - width) / 2
+            let height = (self.frame.height - bottomOffset - topOffset) * pow(scalePercent, CGFloat(index)) + defaultBackgroundCardsTopMargin * 1.5
+            let multiplier: CGFloat = index > 0 ? 1.0 : 0.0
+            let prevCardFrame = index > 0 ? frameForCard(at: max(index - 1, 0)) : .zero
+            let yOffset = (prevCardFrame.height - height + prevCardFrame.origin.y + defaultBackgroundCardsTopMargin) * multiplier
+            frame = CGRect(x: xOffset, y: yOffset, width: width, height: height)
+        } else if startPositionCards == .left {
+            let defaultBackgroundCardsTopMargin = -self.frame.width / 15
+            let defaultBackgroundCardsScalePercent: CGFloat = 0.95
+            let rightOffset: CGFloat = 0
+            let leftOffset = -self.frame.width / 15 * CGFloat(countOfVisibleCards - 1)
+            let scalePercent = defaultBackgroundCardsScalePercent
+            let width = (self.frame.width - leftOffset - rightOffset) * pow(scalePercent, CGFloat(index)) + defaultBackgroundCardsTopMargin * 1.5
+            let height = self.frame.height * pow(scalePercent, CGFloat(index))
+            let yOffset = (self.frame.height - height) / 2
+            let multiplier: CGFloat = index > 0 ? 1.0 : 0.0
+            let prevCardFrame = index > 0 ? frameForCard(at: max(index - 1, 0)) : .zero
+            let xOffset = (prevCardFrame.width - width + prevCardFrame.origin.x + defaultBackgroundCardsTopMargin) * multiplier
+            frame = CGRect(x: xOffset, y: yOffset, width: width, height: height)
+        } else {
+            let defaultBackgroundCardsTopMargin = self.frame.width / 15
+            let defaultBackgroundCardsScalePercent: CGFloat = 0.95
+            let rightOffset: CGFloat = 0
+            let leftOffset = self.frame.width / 15 * CGFloat(countOfVisibleCards - 1)
+            let scalePercent = defaultBackgroundCardsScalePercent
+            let width = (self.frame.width - leftOffset - rightOffset) * pow(scalePercent, CGFloat(index)) + defaultBackgroundCardsTopMargin * 1.5
+            let height = self.frame.height * pow(scalePercent, CGFloat(index))
+            let yOffset = (self.frame.height - height) / 2
+            let multiplier: CGFloat = index > 0 ? 1.0 : 0.0
+            let prevCardFrame = index > 0 ? frameForCard(at: max(index - 1, 0)) : .zero
+            let xOffset = (prevCardFrame.width - width + prevCardFrame.origin.x + defaultBackgroundCardsTopMargin) * multiplier
+            frame = CGRect(x: xOffset, y: yOffset, width: width, height: height)
+        }
         
         return frame
     }
@@ -331,7 +383,7 @@ open class KolodaView: UIView, DraggableCardDelegate {
     }
     
     func card(cardDragShouldBeLockedInVertical card: DraggableCardView) -> Bool {
-        return delegate?.kolodaShoudLockVerticalDirection(self)
+        return delegate?.kolodaShoudLockVerticalDirection(self) ?? false
     }
     
     func card(cardWasTapped card: DraggableCardView) {
@@ -771,4 +823,5 @@ open class KolodaView: UIView, DraggableCardDelegate {
         }
     }
 }
+
 
