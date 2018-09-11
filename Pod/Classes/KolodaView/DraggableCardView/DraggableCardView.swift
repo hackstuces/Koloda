@@ -254,7 +254,7 @@ public class DraggableCardView: UIView, UIGestureRecognizerDelegate {
             var transform = CATransform3DIdentity
             transform = CATransform3DScale(transform, scale, scale, 1)
             transform = CATransform3DRotate(transform, rotationAngle, 0, 0, 1)
-            if delegate?.card(cardDragShouldBeLockedInVertical: self) {
+            if delegate?.card(cardDragShouldBeLockedInVertical: self) ?? false {
                 transform = CATransform3DTranslate(transform, dragDistance.x, 0, 0)
             } else {
                 transform = CATransform3DTranslate(transform, dragDistance.x, dragDistance.y, 0)
@@ -456,4 +456,5 @@ public class DraggableCardView: UIView, UIGestureRecognizerDelegate {
         }
     }
 }
+
 
