@@ -281,16 +281,6 @@ public class DraggableCardView: UIView, UIGestureRecognizerDelegate {
         }
     }
     
-    public func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
-        if let recognizer = gestureRecognizer as? UIPanGestureRecognizer {
-            let translation = recognizer.translation(in: gestureRecognizer.view!)
-            let isHorizontalPan = (fabsf(Float(translation.x)) > fabsf(Float(translation.y)))
-            return !isHorizontalPan
-        }
-        
-        return false
-    }
-    
     public func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
         if let touchView = touch.view, let _ = touchView as? UIControl {
             return false
@@ -300,8 +290,14 @@ public class DraggableCardView: UIView, UIGestureRecognizerDelegate {
         return  true
     }
     
-    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
-        return true
+    public func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+        if let recognizer = gestureRecognizer as? UIPanGestureRecognizer {
+            let translation = recognizer.translation(in: gestureRecognizer.view!)
+            let isHorizontalPan = (fabsf(Float(translation.x)) > fabsf(Float(translation.y)))
+            return !isHorizontalPan
+        }
+        
+        return false
     }
     
     @objc func tapRecognized(_ recogznier: UITapGestureRecognizer) {
